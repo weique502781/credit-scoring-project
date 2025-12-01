@@ -146,7 +146,7 @@ credit_scoring_project/
 ### 环境配置
 ```bash
 # 1. 克隆项目
-git clone <repository-url>
+git clone https://github.com/weique502781/credit-scoring-project.git
 cd credit_scoring_project
 
 # 2. 创建虚拟环境（推荐）
