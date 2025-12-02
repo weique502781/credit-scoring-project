@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Scoring System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Credit Scoring System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict">Predict</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/explain">Explain</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/compare">Compare</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Credit Risk Assessment System</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Welcome to the Credit Scoring System</h5>
+                        <p class="card-text">
+                            This system uses machine learning models to assess credit risk.
+                            We have implemented multiple algorithms including Logistic Regression,
+                            Decision Trees, SVM, Naive Bayes, and AdaBoost ensemble.
+                        </p>
+
+                        <div class="alert alert-info">
+                            <h6>System Overview:</h6>
+                            <ul>
+                                <li><strong>Loaded Models:</strong> {{ total_models }}</li>
+                                <li><strong>Base Models:</strong> 4 (Logistic Regression, Decision Tree, SVM, Naive Bayes)</li>
+                                <li><strong>Ensemble Models:</strong> 2 (Custom AdaBoost, sklearn AdaBoost)</li>
+                                <li><strong>Features:</strong> 20 original features from German Credit Dataset</li>
+                            </ul>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Quick Predict</h5>
+                                        <p class="card-text">Make a credit risk prediction using our models.</p>
+                                        <a href="/predict" class="btn btn-primary">Go to Predict</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Model Comparison</h5>
+                                        <p class="card-text">Compare performance of different models.</p>
+                                        <a href="/compare" class="btn btn-success">View Comparison</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>Available Models:</h5>
+                            <div class="list-group">
+                                {% for model in models %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ model.name }}</h6>
+                                        <small class="text-muted">{{ model.type }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        Machine Learning Course Project | Team Members: [Your Names Here]
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
