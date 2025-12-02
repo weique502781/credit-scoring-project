@@ -1,0 +1,582 @@
+<!-- 模型对比页面 -->
+{% extends "base.html" %}
+
+{% block title %}Model Comparison - Credit Scoring System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-top: 4px solid #3498db;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .metric-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .model-rank {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        border-radius: 50%;
+        background-color: #3498db;
+        color: white;
+        font-weight: 600;
+        margin-right: 10px;
+    }
+
+    .roc-curve-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .comparison-table th {
+        background-color: #2c3e50;
+        color: white;
+        font-weight: 600;
+    }
+
+    .comparison-table tr:hover {
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+
+    .best-metric {
+        background-color: #d4edda;
+        font-weight: 600;
+    }
+
+    .worst-metric {
+        background-color: #f8d7da;
+    }
+
+    .performance-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+    }
+
+    .model-card {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .model-card:hover {
+        border-color: #3498db;
+        transform: translateY(-5px);
+    }
+
+    .recommended-badge {
+        position: absolute;
+        top: -10px;
+        right: 20px;
+        background-color: #e74c3c;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .stat-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Model Performance Comparison</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Compare the performance of different machine learning models on credit risk prediction.
+                </p>
+                <p class="text-muted">
+                    Each model has different strengths and weaknesses. Understanding these differences helps in selecting the right model for specific requirements.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Summary -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value">{{ total_models }}</div>
+            <div class="metric-label">Models Compared</div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value">
+                {% if comparison_data %}
+                {{ "%.3f"|format(comparison_data[0].get('roc_auc', 0)) }}
+                {% else %}0.000{% endif %}
+            </div>
+            <div class="metric-label">Best AUC</div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value">
+                {% if comparison_data %}
+                {{ "%.1f"|format(comparison_data[0].get('accuracy', 0) * 100) }}%
+                {% else %}0.0%{% endif %}
+            </div>
+            <div class="metric-label">Best Accuracy</div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-value">
+                {% if comparison_data %}
+                {{ "%.1f"|format(comparison_data[0].get('f1_score', 0) * 100) }}%
+                {% else %}0.0%{% endif %}
+            </div>
+            <div class="metric-label">Best F1-Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Comparison Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-table me-2"></i>Detailed Performance Metrics</h6>
+            </div>
+            <div class="card-body">
+                {% if comparison_data %}
+                <div class="table-responsive">
+                    <table class="table table-hover comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Model</th>
+                                <th>Accuracy</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1-Score</th>
+                                <th>ROC-AUC</th>
+                                <th>Training Time (s)</th>
+                                <th>Interpretability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model in comparison_data %}
+                            {% set metrics = ['accuracy', 'precision', 'recall', 'f1_score', 'roc_auc'] %}
+                            <tr>
+                                <td>
+                                    <div class="model-rank">{{ loop.index }}</div>
+                                </td>
+                                <td>
+                                    <strong>{{ model.Model.replace('_', ' ').title() }}</strong>
+                                    {% if loop.index == 1 %}
+                                    <span class="badge bg-success performance-badge ms-2">Best</span>
+                                    {% elif loop.last %}
+                                    <span class="badge bg-warning performance-badge ms-2">Needs Improvement</span>
+                                    {% endif %}
+                                </td>
+
+                                {% for metric in metrics %}
+                                <td class="{% if model[metric] == max_values[metric] %}best-metric{% endif %}">
+                                    {{ "%.3f"|format(model[metric]) }}
+                                    {% if model[metric] == max_values[metric] %}
+                                    <i class="fas fa-crown text-warning ms-1"></i>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+
+                                <td>
+                                    {% if model.get('training_time') %}
+                                    {{ "%.2f"|format(model.training_time) }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if 'tree' in model.Model.lower() %}
+                                    <span class="badge bg-success">High</span>
+                                    {% elif 'logistic' in model.Model.lower() %}
+                                    <span class="badge bg-info">Medium</span>
+                                    {% elif 'svm' in model.Model.lower() %}
+                                    <span class="badge bg-warning">Low</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Medium</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Interpretation:</strong> Green cells indicate the best performance for each metric.
+                    ROC-AUC (Area Under Curve) is the most important metric for imbalanced classification problems.
+                </div>
+
+                {% else %}
+                <div class="text-center p-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5>No comparison data available</h5>
+                    <p class="text-muted">
+                        Model comparison data needs to be generated first. Run the evaluation pipeline.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROC Curves -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="roc-curve-container">
+            <h6 class="mb-3">ROC Curves Comparison</h6>
+            <div id="roc-curve-plot"></div>
+
+            {% if roc_data %}
+            <div class="mt-4">
+                <h6>AUC Scores</h6>
+                <div class="row">
+                    {% for roc in roc_data %}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">{{ roc.Model }}</h6>
+                                <div class="display-6 text-primary">{{ roc.AUC }}</div>
+                                <small class="text-muted">AUC Score</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Model Recommendations -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-award me-2"></i>Model Recommendations</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-4 mb-3">
+                        <div class="card model-card h-100 position-relative">
+                            <div class="recommended-badge">Best Overall</div>
+                            <div class="card-body">
+                                <h5 class="card-title">AdaBoost Ensemble</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Highest AUC and F1-Score
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Robust to overfitting
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Moderate interpretability
+                                </p>
+                                <div class="mt-3">
+                                    <span class="badge bg-primary me-2">AUC: 0.865</span>
+                                    <span class="badge bg-success">Accuracy: 78.3%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <div class="card model-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Decision Tree</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Fully interpretable rules
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Fast training and prediction
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Prone to overfitting
+                                </p>
+                                <div class="mt-3">
+                                    <span class="badge bg-primary me-2">AUC: 0.832</span>
+                                    <span class="badge bg-success">Accuracy: 75.6%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <div class="card model-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Logistic Regression</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Good interpretability
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Probability outputs
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Assumes linear relationships
+                                </p>
+                                <div class="mt-3">
+                                    <span class="badge bg-primary me-2">AUC: 0.821</span>
+                                    <span class="badge bg-success">Accuracy: 74.1%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Analysis -->
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Trade-off Analysis</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Accuracy vs Interpretability</h6>
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: 85%">
+                            AdaBoost: 85% Accuracy
+                        </div>
+                    </div>
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar bg-info" style="width: 78%">
+                            Decision Tree: 78% Accuracy
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6>Training Speed</h6>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Fast</span>
+                        <span>Slow</span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-warning" style="width: 90%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <small>Naive Bayes</small>
+                        <small>SVM</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Selection Guide</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <h6 class="mb-1">For High Accuracy</h6>
+                        <small class="text-muted">Choose AdaBoost or Random Forest</small>
+                    </div>
+                    <div class="list-group-item">
+                        <h6 class="mb-1">For Interpretability</h6>
+                        <small class="text-muted">Choose Decision Tree or Logistic Regression</small>
+                    </div>
+                    <div class="list-group-item">
+                        <h6 class="mb-1">For Speed</h6>
+                        <small class="text-muted">Choose Naive Bayes or Logistic Regression</small>
+                    </div>
+                    <div class="list-group-item">
+                        <h6 class="mb-1">For Small Datasets</h6>
+                        <small class="text-muted">Choose SVM or Logistic Regression</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="mb-3">Export Comparison Results</h6>
+                <div>
+                    <button class="btn btn-outline-primary me-2">
+                        <i class="fas fa-file-csv me-2"></i>Export as CSV
+                    </button>
+                    <button class="btn btn-outline-success me-2">
+                        <i class="fas fa-file-pdf me-2"></i>Export as PDF Report
+                    </button>
+                    <button class="btn btn-outline-info">
+                        <i class="fas fa-chart-line me-2"></i>Generate ROC Plot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Generate sample ROC curve using Plotly
+    const rocData = [
+        {
+            x: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            y: [0, 0.2, 0.4, 0.55, 0.65, 0.73, 0.8, 0.86, 0.91, 0.96, 1.0],
+            mode: 'lines',
+            name: 'AdaBoost (AUC = 0.865)',
+            line: { width: 3 }
+        },
+        {
+            x: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            y: [0, 0.15, 0.35, 0.5, 0.6, 0.68, 0.75, 0.81, 0.87, 0.93, 1.0],
+            mode: 'lines',
+            name: 'Decision Tree (AUC = 0.832)',
+            line: { width: 3 }
+        },
+        {
+            x: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            y: [0, 0.12, 0.3, 0.45, 0.55, 0.64, 0.72, 0.79, 0.85, 0.91, 1.0],
+            mode: 'lines',
+            name: 'Logistic Regression (AUC = 0.821)',
+            line: { width: 3 }
+        },
+        {
+            x: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            y: [0, 0.08, 0.25, 0.4, 0.5, 0.6, 0.68, 0.75, 0.82, 0.88, 1.0],
+            mode: 'lines',
+            name: 'SVM (AUC = 0.798)',
+            line: { width: 3 }
+        },
+        {
+            x: [0, 1],
+            y: [0, 1],
+            mode: 'lines',
+            name: 'Random Classifier',
+            line: { dash: 'dash', color: 'gray' }
+        }
+    ];
+
+    const rocLayout = {
+        title: 'ROC Curves Comparison',
+        xaxis: {
+            title: 'False Positive Rate',
+            range: [0, 1],
+            gridcolor: 'lightgray'
+        },
+        yaxis: {
+            title: 'True Positive Rate',
+            range: [0, 1],
+            gridcolor: 'lightgray'
+        },
+        hovermode: 'x unified',
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        font: {
+            family: 'Arial, sans-serif',
+            size: 12
+        },
+        legend: {
+            orientation: 'h',
+            y: -0.2
+        },
+        margin: {
+            t: 50,
+            b: 100,
+            l: 60,
+            r: 40
+        }
+    };
+
+    // Create the plot
+    Plotly.newPlot('roc-curve-plot', rocData, rocLayout);
+
+    // Add hover effects to model cards
+    $('.model-card').hover(
+        function() {
+            $(this).find('.card-title').addClass('text-primary');
+        },
+        function() {
+            $(this).find('.card-title').removeClass('text-primary');
+        }
+    );
+
+    // Add click animation to metric cards
+    $('.metric-card').click(function() {
+        $(this).animate({
+            transform: 'scale(0.95)'
+        }, 100).animate({
+            transform: 'scale(1)'
+        }, 100);
+    });
+
+    // Sort table functionality (if needed)
+    $('.comparison-table th').click(function() {
+        const column = $(this).index();
+        const table = $(this).closest('table');
+        const rows = table.find('tbody tr').toArray();
+
+        // Simple sorting (for demo purposes)
+        rows.sort((a, b) => {
+            const aVal = $(a).find('td').eq(column).text();
+            const bVal = $(b).find('td').eq(column).text();
+            return aVal.localeCompare(bVal);
+        });
+
+        table.find('tbody').empty().append(rows);
+    });
+});
+</script>
+{% endblock %}

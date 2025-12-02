@@ -1,0 +1,376 @@
+<!-- API文档页面 -->
+{% extends "base.html" %}
+
+{% block title %}API Documentation - Credit Scoring System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-code me-2"></i>API Documentation</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">Programmatic access to the Credit Scoring System.</p>
+                <p class="text-muted">
+                    Use our REST API to integrate credit risk predictions into your applications.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Endpoints -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-server me-2"></i>Available Endpoints</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">POST /api/predict</h6>
+                            <span class="badge bg-success">Live</span>
+                        </div>
+                        <p class="mb-1">Make a credit risk prediction</p>
+                        <small class="text-muted">Requires: JSON with feature values</small>
+                    </div>
+
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">GET /api/models</h6>
+                            <span class="badge bg-success">Live</span>
+                        </div>
+                        <p class="mb-1">Get list of available models</p>
+                        <small class="text-muted">Returns: JSON array of model information</small>
+                    </div>
+
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">GET /api/status</h6>
+                            <span class="badge bg-warning">Coming Soon</span>
+                        </div>
+                        <p class="mb-1">Get system status</p>
+                        <small class="text-muted">Returns: System health and model status</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction API Details -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Prediction API</h6>
+            </div>
+            <div class="card-body">
+                <h6>Endpoint</h6>
+                <div class="card bg-dark text-white mb-3">
+                    <div class="card-body">
+                        <code>POST {{ url_for('api_predict', _external=True) }}</code>
+                    </div>
+                </div>
+
+                <h6>Request Format</h6>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <pre class="mb-0">{
+  "features": {
+    "checking_account": "A14",
+    "duration": "24",
+    "credit_history": "A34",
+    "purpose": "A43",
+    "amount": "5000",
+    "savings": "A65",
+    "employment": "A75",
+    "installment_rate": "2",
+    "personal_status": "A93",
+    "debtors": "A101",
+    "residence": "2",
+    "property": "A121",
+    "age": "35",
+    "other_plans": "A143",
+    "housing": "A152",
+    "existing_credits": "1",
+    "job": "A173",
+    "people_liable": "1",
+    "telephone": "A192",
+    "foreign_worker": "A201"
+  },
+  "model": "custom_adaboost"
+}</pre>
+                    </div>
+                </div>
+
+                <h6>Response Format (Success)</h6>
+                <div class="card bg-success text-white mb-3">
+                    <div class="card-body">
+                        <pre class="mb-0">{
+  "prediction": 1,
+  "probability_good": 0.856,
+  "probability_bad": 0.144,
+  "model_used": "custom_adaboost"
+}</pre>
+                    </div>
+                </div>
+
+                <h6>Response Format (Error)</h6>
+                <div class="card bg-danger text-white mb-3">
+                    <div class="card-body">
+                        <pre class="mb-0">{
+  "error": "Invalid input data",
+  "details": "Missing required field: checking_account"
+}</pre>
+                    </div>
+                </div>
+
+                <h6>Try It Now</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Model</label>
+                            <select id="apiModel" class="form-select">
+                                <option value="custom_adaboost">Custom AdaBoost</option>
+                                <option value="decision_tree">Decision Tree</option>
+                                <option value="logistic_regression">Logistic Regression</option>
+                                <option value="svm">SVM</option>
+                            </select>
+                        </div>
+                        <button id="testApiBtn" class="btn btn-primary">
+                            <i class="fas fa-play me-2"></i>Test API
+                        </button>
+                        <div id="apiResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Code Examples -->
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-python me-2"></i>Python Example</h6>
+            </div>
+            <div class="card-body">
+                <pre><code class="language-python">import requests
+import json
+
+# API endpoint
+url = "{{ url_for('api_predict', _external=True) }}"
+
+# Prepare features
+features = {
+    "checking_account": "A14",
+    "duration": "24",
+    "credit_history": "A34",
+    "purpose": "A43",
+    "amount": "5000",
+    # ... other features
+}
+
+# Make request
+response = requests.post(url, json={
+    "features": features,
+    "model": "custom_adaboost"
+})
+
+# Process response
+if response.status_code == 200:
+    result = response.json()
+    print(f"Prediction: {result['prediction']}")
+    print(f"Probability Good: {result['probability_good']:.2%}")
+    print(f"Probability Bad: {result['probability_bad']:.2%}")
+else:
+    print(f"Error: {response.json()['error']}")</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fab fa-js me-2"></i>JavaScript Example</h6>
+            </div>
+            <div class="card-body">
+                <pre><code class="language-javascript">// Using fetch API
+async function makePrediction(features, model = 'custom_adaboost') {
+    try {
+        const response = await fetch('/api/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                features: features,
+                model: model
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        console.log('Prediction:', data.prediction);
+        console.log('Probability Good:', data.probability_good);
+        console.log('Probability Bad:', data.probability_bad);
+
+        return data;
+    } catch (error) {
+        console.error('Error making prediction:', error);
+        throw error;
+    }
+}
+
+// Example usage
+const features = {
+    checking_account: 'A14',
+    duration: '24',
+    credit_history: 'A34',
+    // ... other features
+};
+
+makePrediction(features);</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rate Limits & Authentication -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Usage Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6>Rate Limits</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <strong>Free Tier:</strong> 100 requests/hour
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-database text-success me-2"></i>
+                                <strong>Response Time:</strong> &lt; 2 seconds
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-file-code text-warning me-2"></i>
+                                <strong>Payload Size:</strong> Max 10KB
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <h6>Authentication</h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Currently, the API is open for demonstration purposes.
+                            For production use, API keys will be required.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Disclaimer:</strong> This API is for demonstration and educational purposes only.
+                    Do not use for real financial decisions without proper validation and compliance checks.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // API test button
+    $('#testApiBtn').click(async function() {
+        const btn = $(this);
+        const originalText = btn.html();
+
+        // Show loading
+        btn.prop('disabled', true);
+        btn.html('<span class="spinner-border spinner-border-sm" role="status"></span> Testing...');
+
+        // Prepare test data
+        const testData = {
+            features: {
+                checking_account: "A14",
+                duration: "24",
+                credit_history: "A34",
+                purpose: "A43",
+                amount: "5000",
+                savings: "A65",
+                employment: "A75",
+                installment_rate: "2",
+                personal_status: "A93",
+                debtors: "A101",
+                residence: "2",
+                property: "A121",
+                age: "35",
+                other_plans: "A143",
+                housing: "A152",
+                existing_credits: "1",
+                job: "A173",
+                people_liable: "1",
+                telephone: "A192",
+                foreign_worker: "A201"
+            },
+            model: $('#apiModel').val()
+        };
+
+        try {
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                $('#apiResult').html(`
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-check-circle me-2"></i>API Test Successful</h6>
+                        <pre class="mb-0 mt-2">${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `);
+            } else {
+                $('#apiResult').html(`
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-times-circle me-2"></i>API Error</h6>
+                        <p class="mb-0">${result.error || 'Unknown error'}</p>
+                    </div>
+                `);
+            }
+        } catch (error) {
+            $('#apiResult').html(`
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle me-2"></i>Network Error</h6>
+                    <p class="mb-0">${error.message}</p>
+                </div>
+            `);
+        } finally {
+            // Reset button
+            btn.prop('disabled', false);
+            btn.html(originalText);
+        }
+    });
+});
+</script>
+{% endblock %}

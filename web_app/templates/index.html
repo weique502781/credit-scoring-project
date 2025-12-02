@@ -1,106 +1,240 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit Scoring System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">Credit Scoring System</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/predict">Predict</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/explain">Explain</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/compare">Compare</a>
-                    </li>
-                </ul>
-            </div>
+<!-- 主页 -->
+{% extends "base.html" %}
+
+{% block title %}Home - Credit Scoring System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Credit Scoring System</h1>
+            <p class="lead">An intelligent machine learning system for credit risk assessment and prediction.</p>
+            <hr class="my-4">
+            <p>This system uses multiple machine learning algorithms to predict credit risk and provides detailed explanations for model decisions.</p>
+            <a class="btn btn-primary btn-lg mt-2" href="{{ url_for('predict_form') }}" role="button">
+                <i class="fas fa-play-circle me-2"></i>Start Prediction
+            </a>
         </div>
-    </nav>
+    </div>
+</div>
 
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-8 offset-md-2">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="mb-0">Credit Risk Assessment System</h3>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Welcome to the Credit Scoring System</h5>
-                        <p class="card-text">
-                            This system uses machine learning models to assess credit risk.
-                            We have implemented multiple algorithms including Logistic Regression,
-                            Decision Trees, SVM, Naive Bayes, and AdaBoost ensemble.
-                        </p>
-
-                        <div class="alert alert-info">
-                            <h6>System Overview:</h6>
-                            <ul>
-                                <li><strong>Loaded Models:</strong> {{ total_models }}</li>
-                                <li><strong>Base Models:</strong> 4 (Logistic Regression, Decision Tree, SVM, Naive Bayes)</li>
-                                <li><strong>Ensemble Models:</strong> 2 (Custom AdaBoost, sklearn AdaBoost)</li>
-                                <li><strong>Features:</strong> 20 original features from German Credit Dataset</li>
-                            </ul>
-                        </div>
-
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Quick Predict</h5>
-                                        <p class="card-text">Make a credit risk prediction using our models.</p>
-                                        <a href="/predict" class="btn btn-primary">Go to Predict</a>
-                                    </div>
+<!-- System Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-server me-2"></i>System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="widget">
+                            <div class="widget-header">
+                                <h6 class="widget-title">Models Loaded</h6>
+                                <div class="widget-icon">
+                                    <i class="fas fa-brain"></i>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Model Comparison</h5>
-                                        <p class="card-text">Compare performance of different models.</p>
-                                        <a href="/compare" class="btn btn-success">View Comparison</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <h5>Available Models:</h5>
-                            <div class="list-group">
-                                {% for model in models %}
-                                <div class="list-group-item">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">{{ model.name }}</h6>
-                                        <small class="text-muted">{{ model.type }}</small>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
+                            <h3 class="text-center">{{ system_status.total_models }}</h3>
+                            <p class="text-center text-muted small">Machine Learning Models</p>
                         </div>
                     </div>
-                    <div class="card-footer text-muted">
-                        Machine Learning Course Project | Team Members: [Your Names Here]
+
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="widget">
+                            <div class="widget-header">
+                                <h6 class="widget-title">Preprocessor</h6>
+                                <div class="widget-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                {% if system_status.preprocessor_loaded %}
+                                    <span class="badge bg-success">Ready</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Not Ready</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-center text-muted small">Data Processing Pipeline</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="widget">
+                            <div class="widget-header">
+                                <h6 class="widget-title">Explainers</h6>
+                                <div class="widget-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                {% if system_status.explainer_loaded %}
+                                    <span class="badge bg-success">Ready</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Limited</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-center text-muted small">Model Interpretation</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="widget">
+                            <div class="widget-header">
+                                <h6 class="widget-title">Evaluation Data</h6>
+                                <div class="widget-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                {% if system_status.evaluation_loaded %}
+                                    <span class="badge bg-success">Available</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Loading</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-center text-muted small">Performance Metrics</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!-- Available Models -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Available Models</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for model in models %}
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="card-title mb-0">{{ model.name }}</h6>
+                                    {% if model.loaded %}
+                                    <span class="badge bg-success"><i class="fas fa-check"></i> Loaded</span>
+                                    {% else %}
+                                    <span class="badge bg-danger"><i class="fas fa-times"></i> Not Loaded</span>
+                                    {% endif %}
+                                </div>
+                                <p class="card-text small text-muted">
+                                    {% if 'logistic' in model.type %}
+                                    Logistic Regression - Linear classifier with probability outputs
+                                    {% elif 'tree' in model.type %}
+                                    Decision Tree - Rule-based classifier with full interpretability
+                                    {% elif 'svm' in model.type %}
+                                    Support Vector Machine - Maximum margin classifier
+                                    {% elif 'bayes' in model.type %}
+                                    Naive Bayes - Probabilistic classifier based on Bayes theorem
+                                    {% elif 'adaboost' in model.type %}
+                                    AdaBoost Ensemble - Adaptive boosting with decision stumps
+                                    {% else %}
+                                    {{ model.type }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-calculator fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Make Prediction</h5>
+                <p class="card-text">Use our trained models to predict credit risk for new applicants.</p>
+                <a href="{{ url_for('predict_form') }}" class="btn btn-primary">Try It Now</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-search fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Understand Models</h5>
+                <p class="card-text">Explore how models make decisions with various explanation techniques.</p>
+                <a href="{{ url_for('explain_home') }}" class="btn btn-success">Explore Explanations</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-chart-bar fa-3x text-warning"></i>
+                </div>
+                <h5 class="card-title">Compare Performance</h5>
+                <p class="card-text">Compare different models using ROC curves and performance metrics.</p>
+                <a href="{{ url_for('compare') }}" class="btn btn-warning">View Comparisons</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dataset Information -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Dataset Information</h5>
+            </div>
+            <div class="card-body">
+                <p>The system uses the <strong>German Credit Dataset</strong> with the following characteristics:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Samples
+                                <span class="badge bg-primary rounded-pill">1000</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Features
+                                <span class="badge bg-primary rounded-pill">20</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Numeric Features
+                                <span class="badge bg-primary rounded-pill">7</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Categorical Features
+                                <span class="badge bg-primary rounded-pill">13</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Good Credit
+                                <span class="badge bg-success rounded-pill">700</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Bad Credit
+                                <span class="badge bg-danger rounded-pill">300</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
