@@ -1,0 +1,695 @@
+<!-- 预测表单 -->
+{% extends "base.html" %}
+
+{% block title %}Predict - Credit Scoring System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feature-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3498db;
+    }
+
+    .feature-group-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .form-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .example-btn {
+        font-size: 0.8rem;
+        padding: 2px 8px;
+    }
+
+    .info-icon {
+        color: #3498db;
+        cursor: help;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Credit Risk Prediction</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">Fill in the applicant information below to predict credit risk.</p>
+                <p class="text-muted">All fields are required. Use realistic values for accurate predictions.</p>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Click "Fill Example" buttons to see sample values for each feature.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="predictionForm" method="POST" action="{{ url_for('predict') }}">
+    <!-- Model Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="form-section">
+                <h5 class="feature-group-title">
+                    <i class="fas fa-brain me-2"></i>Model Selection
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="model" class="form-label">Select Prediction Model</label>
+                            <select class="form-select" id="model" name="model" required>
+                                {% for model in models %}
+                                <option value="{{ model }}" {% if model == 'custom_adaboost' %}selected{% endif %}>
+                                    {{ model.replace('_', ' ').title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                Choose the machine learning model for prediction. AdaBoost is recommended for best performance.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-light">
+                            <h6><i class="fas fa-info-circle me-2"></i>Model Recommendation</h6>
+                            <p class="mb-0 small">
+                                <strong>AdaBoost Ensemble</strong> typically provides the best balance of accuracy and robustness.
+                                For interpretability, use <strong>Decision Tree</strong>. For probability outputs, use <strong>Logistic Regression</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Information Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="feature-section">
+                <h5 class="feature-group-title">
+                    <i class="fas fa-user me-2"></i>Personal Information
+                </h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="age" class="form-label">
+                            Age (years)
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Age of the applicant in years"></i>
+                        </label>
+                        <input type="number" class="form-control" id="age" name="age"
+                               min="18" max="100" value="{{ sample_instance.age }}" required>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Range: 19-75 years</small>
+                            <button type="button" class="btn btn-sm btn-outline-primary example-btn"
+                                    onclick="document.getElementById('age').value = '35'">
+                                Fill Example
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="personal_status" class="form-label">
+                            Personal Status & Gender
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Personal status and gender of the applicant"></i>
+                        </label>
+                        <select class="form-select" id="personal_status" name="personal_status" required>
+                            <option value="">Select status...</option>
+                            {% for code, desc in dataset_info.features.personal_status.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.personal_status %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('personal_status').value = 'A93'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="job" class="form-label">
+                            Job Type
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Current job type of the applicant"></i>
+                        </label>
+                        <select class="form-select" id="job" name="job" required>
+                            <option value="">Select job type...</option>
+                            {% for code, desc in dataset_info.features.job.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.job %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('job').value = 'A173'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="foreign_worker" class="form-label">
+                            Foreign Worker
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Whether the applicant is a foreign worker"></i>
+                        </label>
+                        <select class="form-select" id="foreign_worker" name="foreign_worker" required>
+                            <option value="">Select...</option>
+                            {% for code, desc in dataset_info.features.foreign_worker.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.foreign_worker %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('foreign_worker').value = 'A201'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Information Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="feature-section">
+                <h5 class="feature-group-title">
+                    <i class="fas fa-money-bill-wave me-2"></i>Financial Information
+                </h5>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="checking_account" class="form-label">
+                            Checking Account Status
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Status of existing checking account in DM"></i>
+                        </label>
+                        <select class="form-select" id="checking_account" name="checking_account" required>
+                            <option value="">Select account status...</option>
+                            {% for code, desc in dataset_info.features.checking_account.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.checking_account %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('checking_account').value = 'A14'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="savings" class="form-label">
+                            Savings Account
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Savings account/bonds in DM"></i>
+                        </label>
+                        <select class="form-select" id="savings" name="savings" required>
+                            <option value="">Select savings...</option>
+                            {% for code, desc in dataset_info.features.savings.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.savings %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('savings').value = 'A65'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="amount" class="form-label">
+                            Credit Amount (DM)
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Credit amount in Deutsche Mark"></i>
+                        </label>
+                        <input type="number" class="form-control" id="amount" name="amount"
+                               min="250" max="20000" value="{{ sample_instance.amount }}" required>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Range: 250-18,424 DM</small>
+                            <button type="button" class="btn btn-sm btn-outline-primary example-btn"
+                                    onclick="document.getElementById('amount').value = '5000'">
+                                Fill Example
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="duration" class="form-label">
+                            Loan Duration (months)
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Duration of the loan in months"></i>
+                        </label>
+                        <input type="number" class="form-control" id="duration" name="duration"
+                               min="4" max="72" value="{{ sample_instance.duration }}" required>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Range: 4-72 months</small>
+                            <button type="button" class="btn btn-sm btn-outline-primary example-btn"
+                                    onclick="document.getElementById('duration').value = '24'">
+                                Fill Example
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="installment_rate" class="form-label">
+                            Installment Rate (%)
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Installment rate as percentage of disposable income"></i>
+                        </label>
+                        <select class="form-select" id="installment_rate" name="installment_rate" required>
+                            <option value="">Select rate...</option>
+                            <option value="1" {% if sample_instance.installment_rate == '1' %}selected{% endif %}>1 - Less than 20%</option>
+                            <option value="2" {% if sample_instance.installment_rate == '2' %}selected{% endif %}>2 - 20% to 25%</option>
+                            <option value="3" {% if sample_instance.installment_rate == '3' %}selected{% endif %}>3 - 25% to 35%</option>
+                            <option value="4" {% if sample_instance.installment_rate == '4' %}selected{% endif %}>4 - More than 35%</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('installment_rate').value = '2'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credit History Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="feature-section">
+                <h5 class="feature-group-title">
+                    <i class="fas fa-history me-2"></i>Credit History
+                </h5>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="credit_history" class="form-label">
+                            Credit History
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Previous credit history of the applicant"></i>
+                        </label>
+                        <select class="form-select" id="credit_history" name="credit_history" required>
+                            <option value="">Select history...</option>
+                            {% for code, desc in dataset_info.features.credit_history.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.credit_history %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('credit_history').value = 'A34'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="purpose" class="form-label">
+                            Loan Purpose
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Purpose of the loan"></i>
+                        </label>
+                        <select class="form-select" id="purpose" name="purpose" required>
+                            <option value="">Select purpose...</option>
+                            {% for code, desc in dataset_info.features.purpose.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.purpose %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('purpose').value = 'A43'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="existing_credits" class="form-label">
+                            Existing Credits
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Number of existing credits at this bank"></i>
+                        </label>
+                        <select class="form-select" id="existing_credits" name="existing_credits" required>
+                            <option value="">Select number...</option>
+                            {% for i in range(1, 5) %}
+                            <option value="{{ i }}" {% if i|string == sample_instance.existing_credits %}selected{% endif %}>
+                                {{ i }} credit{% if i > 1 %}s{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('existing_credits').value = '1'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="debtors" class="form-label">
+                            Other Debtors
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Other debtors or guarantors"></i>
+                        </label>
+                        <select class="form-select" id="debtors" name="debtors" required>
+                            <option value="">Select...</option>
+                            {% for code, desc in dataset_info.features.debtors.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.debtors %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('debtors').value = 'A101'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="other_plans" class="form-label">
+                            Other Installment Plans
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Other installment plans (bank or stores)"></i>
+                        </label>
+                        <select class="form-select" id="other_plans" name="other_plans" required>
+                            <option value="">Select...</option>
+                            {% for code, desc in dataset_info.features.other_plans.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.other_plans %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('other_plans').value = 'A143'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Housing and Employment Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="feature-section">
+                <h5 class="feature-group-title">
+                    <i class="fas fa-home me-2"></i>Housing & Employment
+                </h5>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="housing" class="form-label">
+                            Housing
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Current housing situation"></i>
+                        </label>
+                        <select class="form-select" id="housing" name="housing" required>
+                            <option value="">Select housing...</option>
+                            {% for code, desc in dataset_info.features.housing.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.housing %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('housing').value = 'A152'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="employment" class="form-label">
+                            Employment Since
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Duration of present employment"></i>
+                        </label>
+                        <select class="form-select" id="employment" name="employment" required>
+                            <option value="">Select employment...</option>
+                            {% for code, desc in dataset_info.features.employment.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.employment %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('employment').value = 'A75'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="residence" class="form-label">
+                            Residence Since (years)
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Duration at present residence"></i>
+                        </label>
+                        <select class="form-select" id="residence" name="residence" required>
+                            <option value="">Select years...</option>
+                            {% for i in range(1, 5) %}
+                            <option value="{{ i }}" {% if i|string == sample_instance.residence %}selected{% endif %}>
+                                {{ i }} year{% if i > 1 %}s{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('residence').value = '2'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="property" class="form-label">
+                            Property
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Type of property owned"></i>
+                        </label>
+                        <select class="form-select" id="property" name="property" required>
+                            <option value="">Select property...</option>
+                            {% for code, desc in dataset_info.features.property.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.property %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('property').value = 'A121'">
+                            Fill Example
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="telephone" class="form-label">
+                            Telephone
+                            <i class="fas fa-info-circle info-icon"
+                               data-bs-toggle="tooltip"
+                               title="Whether telephone is registered under customer's name"></i>
+                        </label>
+                        <select class="form-select" id="telephone" name="telephone" required>
+                            <option value="">Select...</option>
+                            {% for code, desc in dataset_info.features.telephone.categories.items() %}
+                            <option value="{{ code }}" {% if code == sample_instance.telephone %}selected{% endif %}>
+                                {{ desc }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary example-btn mt-1"
+                                onclick="document.getElementById('telephone').value = 'A192'">
+                            Fill Example
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                            <i class="fas fa-redo me-2"></i>Reset Form
+                        </button>
+
+                        <div>
+                            <button type="button" class="btn btn-info me-2" onclick="fillAllExamples()">
+                                <i class="fas fa-magic me-2"></i>Fill All Examples
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-rocket me-2"></i>Make Prediction
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> This is a demo system. For real credit decisions, consult with financial professionals.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function resetForm() {
+    if (confirm('Are you sure you want to reset all form fields?')) {
+        document.getElementById('predictionForm').reset();
+    }
+}
+
+function fillAllExamples() {
+    // Personal Information
+    document.getElementById('age').value = '35';
+    document.getElementById('personal_status').value = 'A93';
+    document.getElementById('job').value = 'A173';
+    document.getElementById('foreign_worker').value = 'A201';
+
+    // Financial Information
+    document.getElementById('checking_account').value = 'A14';
+    document.getElementById('savings').value = 'A65';
+    document.getElementById('amount').value = '5000';
+    document.getElementById('duration').value = '24';
+    document.getElementById('installment_rate').value = '2';
+
+    // Credit History
+    document.getElementById('credit_history').value = 'A34';
+    document.getElementById('purpose').value = 'A43';
+    document.getElementById('existing_credits').value = '1';
+    document.getElementById('debtors').value = 'A101';
+    document.getElementById('other_plans').value = 'A143';
+
+    // Housing and Employment
+    document.getElementById('housing').value = 'A152';
+    document.getElementById('employment').value = 'A75';
+    document.getElementById('residence').value = '2';
+    document.getElementById('property').value = 'A121';
+    document.getElementById('telephone').value = 'A192';
+
+    // Model selection
+    document.getElementById('model').value = 'custom_adaboost';
+
+    // Show success message
+    showAlert('All example values have been filled!', 'success');
+}
+
+function showAlert(message, type = 'info') {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    // Insert at the top of the form
+    const form = document.getElementById('predictionForm');
+    form.insertAdjacentHTML('afterbegin', alertHtml);
+
+    // Auto dismiss after 3 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            if (alert.parentElement === form) {
+                alert.remove();
+            }
+        });
+    }, 3000);
+}
+
+// Form validation
+document.getElementById('predictionForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    const requiredFields = this.querySelectorAll('[required]');
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('is-invalid');
+
+            // Create error message if not exists
+            if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = 'This field is required';
+                field.parentNode.insertBefore(errorDiv, field.nextSibling);
+            }
+        } else {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+
+            // Remove error message if exists
+            const errorDiv = field.nextElementSibling;
+            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                errorDiv.remove();
+            }
+        }
+    });
+
+    if (!isValid) {
+        e.preventDefault();
+        showAlert('Please fill in all required fields.', 'danger');
+    }
+});
+
+// Real-time validation
+document.querySelectorAll('#predictionForm input, #predictionForm select').forEach(field => {
+    field.addEventListener('blur', function() {
+        if (this.hasAttribute('required') && !this.value.trim()) {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+        } else if (this.value.trim()) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        }
+    });
+});
+</script>
+{% endblock %}

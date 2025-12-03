@@ -1,0 +1,207 @@
+<!-- 可解释性页面 -->
+{% extends "base.html" %}
+
+{% block title %}Model Explanations - Credit Scoring System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Model Explainability Dashboard</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">Understand how our machine learning models make credit risk predictions.</p>
+                <p class="text-muted">
+                    Model explainability helps build trust in AI systems by providing insights into model decisions.
+                    Explore different explanation techniques below.
+                </p>
+
+                {% if has_last_prediction %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Great!</strong> You have a recent prediction that can be explained.
+                    <a href="{{ url_for('explain_method', method='lime') }}" class="alert-link">Click here to explain it now.</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Explanation Methods -->
+<div class="row mb-4">
+    {% for method in explanation_methods %}
+    <div class="col-lg-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        {% if method.id == 'feature_importance' %}
+                        <i class="fas fa-chart-pie fa-2x text-primary"></i>
+                        {% elif method.id == 'decision_rules' %}
+                        <i class="fas fa-sitemap fa-2x text-success"></i>
+                        {% elif method.id == 'lime' %}
+                        <i class="fas fa-eye fa-2x text-warning"></i>
+                        {% elif method.id == 'shap' %}
+                        <i class="fas fa-project-diagram fa-2x text-danger"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0">{{ method.name }}</h5>
+                        <p class="text-muted small mb-0">{{ method.description }}</p>
+                    </div>
+                </div>
+
+                <p class="card-text">
+                    {% if method.id == 'feature_importance' %}
+                    Discover which features are most important for the model's decisions globally.
+                    {% elif method.id == 'decision_rules' %}
+                    Extract human-readable rules from tree-based models.
+                    {% elif method.id == 'lime' %}
+                    Explain individual predictions by approximating the model locally.
+                    {% elif method.id == 'shap' %}
+                    Understand feature contributions using Shapley values from game theory.
+                    {% endif %}
+                </p>
+
+                <div class="mt-3">
+                    <a href="{{ url_for('explain_method', method=method.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-right me-2"></i>Explore
+                    </a>
+
+                    {% if method.id == 'lime' and has_last_prediction %}
+                    <span class="badge bg-success ms-2">
+                        <i class="fas fa-bolt me-1"></i>Ready to Analyze
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Explanation Concepts -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Why Model Explainability Matters</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h6>Trust & Transparency</h6>
+                                <p class="small text-muted mb-0">
+                                    Users need to trust AI decisions. Explainability builds confidence by showing how decisions are made.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-balance-scale fa-2x text-success"></i>
+                            </div>
+                            <div>
+                                <h6>Regulatory Compliance</h6>
+                                <p class="small text-muted mb-0">
+                                    Regulations like GDPR require explanations for automated decisions affecting individuals.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-bug fa-2x text-warning"></i>
+                            </div>
+                            <div>
+                                <h6>Debugging & Improvement</h6>
+                                <p class="small text-muted mb-0">
+                                    Explanations help identify model biases, errors, and areas for improvement.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-graduation-cap fa-2x text-danger"></i>
+                            </div>
+                            <div>
+                                <h6>Knowledge Discovery</h6>
+                                <p class="small text-muted mb-0">
+                                    Explanations can reveal insights about the problem domain that weren't previously known.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Start -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>Quick Start Guide</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <span class="badge bg-primary rounded-circle p-3">1</span>
+                            </div>
+                            <h6>Make a Prediction</h6>
+                            <p class="small text-muted">
+                                First, make a credit risk prediction using our prediction tool.
+                            </p>
+                            <a href="{{ url_for('predict_form') }}" class="btn btn-sm btn-outline-primary">Go to Predict</a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <span class="badge bg-success rounded-circle p-3">2</span>
+                            </div>
+                            <h6>Choose Explanation</h6>
+                            <p class="small text-muted">
+                                Select an explanation method that matches your needs.
+                            </p>
+                            <a href="#explanation-methods" class="btn btn-sm btn-outline-success">View Methods</a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <span class="badge bg-warning rounded-circle p-3">3</span>
+                            </div>
+                            <h6>Analyze Results</h6>
+                            <p class="small text-muted">
+                                Interpret the explanation to understand the model's decision.
+                            </p>
+                            <a href="{{ url_for('explain_method', method='feature_importance') }}" class="btn btn-sm btn-outline-warning">Try Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

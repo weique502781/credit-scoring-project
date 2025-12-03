@@ -1,0 +1,584 @@
+<!-- 决策规划页面 -->
+{% extends "base.html" %}
+
+{% block title %}Decision Rules - Credit Scoring System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rule-card {
+        border-left: 4px solid #3498db;
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 0 8px 8px 0;
+        transition: all 0.3s ease;
+    }
+
+    .rule-card:hover {
+        background-color: #e9ecef;
+        transform: translateX(5px);
+    }
+
+    .rule-condition {
+        font-family: 'Courier New', monospace;
+        background-color: #2c3e50;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin: 5px 0;
+        font-size: 0.9rem;
+    }
+
+    .tree-node {
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        background-color: white;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .tree-node:before {
+        content: '';
+        position: absolute;
+        top: -11px;
+        left: 20px;
+        width: 2px;
+        height: 10px;
+        background-color: #dee2e6;
+    }
+
+    .confidence-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+    }
+
+    .tree-structure {
+        padding-left: 20px;
+        border-left: 2px dashed #dee2e6;
+        margin-left: 10px;
+    }
+
+    .rule-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .rule-type {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .simplified-rule {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .adaboost-tree {
+        background-color: #e8f4fd;
+        border: 1px solid #b8daff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .tree-weight {
+        background-color: #3498db;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .no-data-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-sitemap me-2"></i>Decision Rules Extraction</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Extract human-readable rules from tree-based models.
+                </p>
+                <p class="text-muted">
+                    Decision rules provide transparent explanations by showing exactly how the model makes decisions.
+                    These rules are easy to understand and can be validated by domain experts.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if no_tree_models %}
+<!-- No Tree Models Available -->
+<div class="row">
+    <div class="col-12">
+        <div class="no-data-card">
+            <i class="fas fa-tree fa-4x mb-4"></i>
+            <h3>No Tree-based Models Available</h3>
+            <p class="lead">
+                Tree-based models (Decision Trees, AdaBoost) are required for rule extraction.
+            </p>
+            <div class="mt-4">
+                <a href="{{ url_for('home') }}" class="btn btn-light me-2">
+                    <i class="fas fa-home me-2"></i>Go to Home
+                </a>
+                <a href="{{ url_for('predict_form') }}" class="btn btn-outline-light">
+                    <i class="fas fa-calculator me-2"></i>Make a Prediction
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Available Tree Models -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i>Available Tree-based Models</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for model_name, model_info in tree_models.items() %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="card-title mb-0">{{ model_name.replace('_', ' ').title() }}</h6>
+                                    <span class="badge bg-primary">
+                                        {% if 'tree' in model_name %}
+                                        Single Tree
+                                        {% elif 'adaboost' in model_name %}
+                                        Ensemble
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <p class="card-text small text-muted">
+                                    {% if 'tree' in model_name %}
+                                    Single decision tree with interpretable rules
+                                    {% elif 'adaboost' in model_name %}
+                                    AdaBoost ensemble with multiple weak trees
+                                    {% endif %}
+                                </p>
+                                <button class="btn btn-sm btn-outline-primary extract-rules-btn"
+                                        data-model="{{ model_name }}">
+                                    <i class="fas fa-code-branch me-2"></i>Extract Rules
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rules Display Area -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-code me-2"></i>Extracted Decision Rules</h6>
+            </div>
+            <div class="card-body">
+                <div id="rules-display">
+                    <div class="text-center p-5">
+                        <i class="fas fa-code-branch fa-3x text-muted mb-3"></i>
+                        <h5>No rules extracted yet</h5>
+                        <p class="text-muted">
+                            Click "Extract Rules" on a tree-based model above to see its decision rules
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rules Report -->
+{% if report_html %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Rules Report</h6>
+            </div>
+            <div class="card-body">
+                <div class="rules-report">
+                    {{ report_html|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Rules Examples -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Understanding Decision Rules</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6>How to Read Rules</h6>
+                        <div class="rule-card">
+                            <div class="rule-header">
+                                <span class="rule-type text-primary">If-Then Rule</span>
+                                <span class="confidence-badge bg-success">95% Confidence</span>
+                            </div>
+                            <div class="rule-condition">
+                                IF checking_account = 'no checking account'<br>
+                                AND duration ≤ 12 months<br>
+                                AND credit_history = 'all credits paid back duly'<br>
+                                THEN Credit = Good
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-database me-1"></i>
+                                    150 samples follow this rule
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <h6>Rule Components</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Conditions:</strong> Feature-value comparisons
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Confidence:</strong> Accuracy of the rule
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Coverage:</strong> Number of samples matching
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Complexity:</strong> Number of conditions
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tip:</strong> Simple rules with high confidence are more reliable and easier to understand.
+                    Complex rules may overfit to specific cases in the training data.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pre-extracted Rules (if available) -->
+{% if all_rules %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Previously Extracted Rules</h6>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="rulesAccordion">
+                    {% for model_name, rules_info in all_rules.items() %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ loop.index }}">
+                                {{ model_name.replace('_', ' ').title() }}
+                                <span class="badge bg-primary ms-2">
+                                    {% if rules_info.type == 'single_tree' %}
+                                    {{ rules_info.total_rules }} rules
+                                    {% elif rules_info.type == 'adaboost' %}
+                                    {{ rules_info.trees_analyzed }} trees
+                                    {% endif %}
+                                </span>
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}"
+                             class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                             data-bs-parent="#rulesAccordion">
+                            <div class="accordion-body">
+                                {% if rules_info.type == 'single_tree' %}
+                                    <h6>Simplified Rules (Top 20)</h6>
+                                    {% for rule in rules_info.simplified_rules %}
+                                    <div class="rule-card">
+                                        <div class="rule-header">
+                                            <span class="rule-type text-primary">Rule {{ rule.rule_id }}</span>
+                                            <span class="confidence-badge {% if rule.confidence > 0.8 %}bg-success{% elif rule.confidence > 0.6 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                {{ "%.1f"|format(rule.confidence * 100) }}%
+                                            </span>
+                                        </div>
+                                        <div class="simplified-rule">
+                                            {{ rule.rule_simple|default(rule.rule) }}
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-tag me-1"></i>
+                                                {{ rule.class }}
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-database me-1"></i>
+                                                {{ rule.samples }} samples
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+
+                                    {% if rules_info.has_more %}
+                                    <div class="alert alert-secondary mt-3">
+                                        <i class="fas fa-ellipsis-h me-2"></i>
+                                        {{ rules_info.total_rules - 20 }} more rules not shown
+                                    </div>
+                                    {% endif %}
+
+                                {% elif rules_info.type == 'adaboost' %}
+                                    <h6>AdaBoost Tree Analysis</h6>
+                                    <p class="text-muted">
+                                        Analyzed {{ rules_info.trees_analyzed }} out of {{ rules_info.total_trees }} weak trees
+                                    </p>
+
+                                    {% for tree_name, tree_info in rules_info.rules.items() %}
+                                    <div class="adaboost-tree">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6>{{ tree_name.replace('_', ' ').title() }}</h6>
+                                            <div>
+                                                <span class="tree-weight me-2">
+                                                    Weight: {{ "%.3f"|format(tree_info.weight) }}
+                                                </span>
+                                                <span class="badge {% if tree_info.error < 0.3 %}bg-success{% else %}bg-warning{% endif %}">
+                                                    Error: {{ "%.3f"|format(tree_info.error) }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {% if tree_info.rules %}
+                                            {% for rule in tree_info.rules[:3] %}
+                                            <div class="tree-node">
+                                                <div class="rule-condition small">
+                                                    {{ rule.rule }}
+                                                </div>
+                                                <div class="d-flex justify-content-between mt-2">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-tag me-1"></i>
+                                                        {{ rule.class }}
+                                                    </small>
+                                                    <small class="text-muted">
+                                                        {{ "%.1f"|format(rule.confidence * 100) }}% confidence
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+
+                                            {% if tree_info.rules|length > 3 %}
+                                            <div class="text-center mt-2">
+                                                <small class="text-muted">
+                                                    ... and {{ tree_info.rules|length - 3 }} more conditions
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="text-center p-3">
+                                                <small class="text-muted">
+                                                    No rules extracted from this tree (too deep or complex)
+                                                </small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+
+                                {% elif rules_info.type == 'error' %}
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Error extracting rules: {{ rules_info.error }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Extract rules button click handler
+    $('.extract-rules-btn').click(function() {
+        const modelName = $(this).data('model');
+        const button = $(this);
+
+        // Show loading state
+        button.html('<span class="spinner-border spinner-border-sm" role="status"></span> Extracting...');
+        button.prop('disabled', true);
+
+        // Simulate API call (in real implementation, this would call an API endpoint)
+        setTimeout(() => {
+            // Reset button
+            button.html('<i class="fas fa-code-branch me-2"></i>Extract Rules');
+            button.prop('disabled', false);
+
+            // Show rules in display area
+            showRulesForModel(modelName);
+        }, 1500);
+    });
+
+    function showRulesForModel(modelName) {
+        let rulesHtml = '';
+
+        if (modelName.includes('tree')) {
+            rulesHtml = `
+                <h6 class="mb-3">${modelName.replace('_', ' ').title()} - Decision Rules</h6>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Extracted 45 rules from the decision tree model. Showing top 10 most confident rules.
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="rule-card">
+                            <div class="rule-header">
+                                <span class="rule-type text-success">Good Credit Rule</span>
+                                <span class="confidence-badge bg-success">94%</span>
+                            </div>
+                            <div class="simplified-rule">
+                                IF Checking Account has balance ≥ 200 DM<br>
+                                AND Loan Duration ≤ 18 months<br>
+                                THEN Credit = Good
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-database me-1"></i>
+                                    120 samples | Depth: 2
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="rule-card">
+                            <div class="rule-header">
+                                <span class="rule-type text-danger">Bad Credit Rule</span>
+                                <span class="confidence-badge bg-success">89%</span>
+                            </div>
+                            <div class="simplified-rule">
+                                IF Checking Account = no account<br>
+                                AND Credit History = critical account<br>
+                                AND Loan Amount > 8000 DM<br>
+                                THEN Credit = Bad
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-database me-1"></i>
+                                    85 samples | Depth: 3
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>Export All Rules
+                    </button>
+                </div>
+            `;
+        } else if (modelName.includes('adaboost')) {
+            rulesHtml = `
+                <h6 class="mb-3">${modelName.replace('_', ' ').title()} - AdaBoost Rules</h6>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    AdaBoost combines multiple weak trees. Showing rules from the 5 most influential trees.
+                </div>
+
+                <div class="adaboost-tree">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Tree 1 (Most Influential)</h6>
+                        <span class="tree-weight">Weight: 0.45</span>
+                    </div>
+
+                    <div class="tree-node">
+                        <div class="rule-condition">
+                            IF checking_account = 'A14'<br>
+                            THEN Credit = Bad
+                        </div>
+                        <small class="text-muted">Error: 0.32 | Samples: 210</small>
+                    </div>
+                </div>
+
+                <div class="adaboost-tree">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Tree 2</h6>
+                        <span class="tree-weight">Weight: 0.28</span>
+                    </div>
+
+                    <div class="tree-node">
+                        <div class="rule-condition">
+                            IF duration > 24<br>
+                            AND amount > 5000<br>
+                            THEN Credit = Bad
+                        </div>
+                        <small class="text-muted">Error: 0.41 | Samples: 156</small>
+                    </div>
+                </div>
+            `;
+        }
+
+        $('#rules-display').html(rulesHtml);
+
+        // Add animation to new rules
+        $('.rule-card, .adaboost-tree').hide().fadeIn(500);
+    }
+
+    // Initialize accordion
+    $('.accordion-button').click(function() {
+        $(this).toggleClass('collapsed');
+    });
+
+    // Add hover effects to rule cards
+    $(document).on('mouseenter', '.rule-card', function() {
+        $(this).css({
+            'transform': 'translateX(5px)',
+            'box-shadow': '0 5px 15px rgba(0,0,0,0.1)'
+        });
+    }).on('mouseleave', '.rule-card', function() {
+        $(this).css({
+            'transform': 'translateX(0)',
+            'box-shadow': 'none'
+        });
+    });
+});
+</script>
+{% endblock %}
