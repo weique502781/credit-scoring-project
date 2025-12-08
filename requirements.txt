@@ -4,3 +4,6 @@ scikit-learn~=1.6.1
 matplotlib~=3.9.4
 seaborn~=0.13.2
 joblib~=1.5.2
+flask
+werkzeug
+plotly
