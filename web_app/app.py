@@ -644,7 +644,6 @@ def explain_lime():
         processed_input = np.array(prediction_data['processed_input'])
 
         # 需要训练数据来初始化LIME，这里使用示例数据
-        # 在实际应用中，应该加载训练数据
         from sklearn.datasets import make_classification
         X_sample, _ = make_classification(n_samples=100, n_features=processed_input.shape[1],
                                           random_state=42)
@@ -666,4 +665,44 @@ def explain_lime():
                 weights = []
 
                 for feat, weight in explanation['explanation']:
-                    feature_name = feat.split(' ')
+                    feature_name = feat.split(' ')[-1] if ' ' in feat else feat
+                    features.append(feature_name)
+                    weights.append(weight)
+
+                # 创建图表
+                fig = px.bar(
+                    x=weights,
+                    y=features,
+                    orientation='h',
+                    title='LIME Feature Importance Explanation',
+                    labels={'x': 'Feature Weight', 'y': 'Feature'}
+                )
+
+                fig.update_layout(
+                    height=400,
+                    showlegend=False,
+                    xaxis_title="Feature Weight (Positive favors Good Credit)",
+                    yaxis_title="Feature"
+                )
+
+                plot_html = plotly.io.to_html(fig, full_html=False)
+
+                # 渲染结果页面
+                return render_template('explain_lime.html',
+                                       explanation=explanation,
+                                       plot_html=plot_html,
+                                       has_plot=True,
+                                       model_name=model_name,
+                                       prediction_result=prediction_data['result'])
+            else:
+                return render_template('explain_lime.html',
+                                       error="LIME explanation could not be generated",
+                                       model_name=model_name)
+        else:
+            return render_template('explain_lime.html',
+                                   error="Explainer not initialized",
+                                   no_prediction=False)
+
+    except Exception as e:
+        return render_template('error.html',
+                               error_message=f"LIME explanation failed: {str(e)}")
