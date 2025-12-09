@@ -2,12 +2,8 @@
 __pycache__/
 *.pyc
 
-# Model artifacts (DO NOT COMMIT)
-models/saved_models/*.pkl
-models/saved_models/*.npy
-models/saved_models/*.json
-models/saved_models/*.csv
-
-# IDE files
+# IDE config
 .idea/
 *.iml
+
+# Don't ignore saved models → allow upload

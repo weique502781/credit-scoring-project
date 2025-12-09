@@ -1,0 +1,31 @@
+{
+  "model_config": "optimized_models_only",
+  "random_state": 42,
+  "feature_count": 65,
+  "models_trained": [
+    "logistic_regression",
+    "decision_tree",
+    "svm_rbf",
+    "naive_bayes",
+    "adaboost_custom",
+    "sklearn_adaboost"
+  ],
+  "model_details": {
+    "logistic_regression": "优化参数(C=0.5, solver=liblinear)",
+    "decision_tree": "优化参数(max_depth=7, max_features=sqrt)",
+    "svm": "优化参数(C=2.0, gamma=0.1, cache_size=500)",
+    "naive_bayes": "高斯朴素贝叶斯",
+    "custom_adaboost": "改进版AdaBoost(early_stopping, bootstrap)",
+    "sklearn_adaboost": "sklearn官方AdaBoost"
+  },
+  "test_accuracy": {
+    "logistic_regression": 0.695,
+    "decision_tree": 0.72,
+    "svm_rbf": 0.775,
+    "naive_bayes": 0.71,
+    "adaboost_custom": 0.77,
+    "sklearn_adaboost": 0.69
+  },
+  "avg_accuracy": 0.7266666666666666,
+  "best_model": "svm_rbf"
+}
