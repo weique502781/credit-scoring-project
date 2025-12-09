@@ -68,7 +68,7 @@ credit_scoring_project/
 │ ├── css/ # CSS样式文件
 │ │ └── style.css # 主样式表
 │ └── js/ # JavaScript文件
-│ └── main.js # 前端脚本
+│ └── script.js # 前端脚本
 │
 ├── config/ # 配置文件目录
 │ └── config.yaml # 项目配置文件

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型对比分析 - 模型分析结果展示</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>机器学习模型分析结果展示平台</h1>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="/">首页</a></li>
+                <li><a href="/data-analysis">数据处理分析</a></li>
+                <li><a href="/model-results">模型预测结果</a></li>
+                <li><a href="/model-comparison" class="active">模型对比分析</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section>
+            <h2>模型性能对比分析</h2>
+            <p>本部分展示不同模型在各项评估指标上的表现对比，帮助选择最优模型。</p>
+        </section>
+
+        <section>
+            <h2>ROC曲线对比</h2>
+            <p>ROC曲线展示了各模型在不同阈值下的真正例率(TPR)和假正例率(FPR)的关系，曲线下面积(AUC)越大模型性能越好：</p>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/roc_curves.png"
+                         alt="各模型ROC曲线对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>各模型ROC曲线对比</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>模型评估指标对比</h2>
+            <p>以下是各模型在主要评估指标上的表现对比：</p>
+
+            <h3>准确率 (Accuracy)</h3>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/model_comparison_accuracy.png"
+                         alt="模型准确率对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>模型准确率对比</p>
+                </div>
+            </div>
+
+            <h3>精确率 (Precision)</h3>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/model_comparison_precision.png"
+                         alt="模型精确率对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>模型精确率对比</p>
+                </div>
+            </div>
+
+            <h3>召回率 (Recall)</h3>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/model_comparison_recall.png"
+                         alt="模型召回率对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>模型召回率对比</p>
+                </div>
+            </div>
+
+            <h3>F1分数</h3>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/model_comparison_f1.png"
+                         alt="模型F1分数对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>模型F1分数对比</p>
+                </div>
+            </div>
+
+            <h3>ROC-AUC</h3>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/model_comparison_roc_auc.png"
+                         alt="模型ROC-AUC对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>模型ROC-AUC对比</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

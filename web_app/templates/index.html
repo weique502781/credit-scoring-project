@@ -1,240 +1,77 @@
-<!-- 主页 -->
-{% extends "base.html" %}
-
-{% block title %}Home - Credit Scoring System{% endblock %}
-
-{% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="jumbotron bg-light p-5 rounded">
-            <h1 class="display-4">Credit Scoring System</h1>
-            <p class="lead">An intelligent machine learning system for credit risk assessment and prediction.</p>
-            <hr class="my-4">
-            <p>This system uses multiple machine learning algorithms to predict credit risk and provides detailed explanations for model decisions.</p>
-            <a class="btn btn-primary btn-lg mt-2" href="{{ url_for('predict_form') }}" role="button">
-                <i class="fas fa-play-circle me-2"></i>Start Prediction
-            </a>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型分析结果展示</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>机器学习模型分析结果展示平台</h1>
         </div>
-    </div>
-</div>
+    </header>
 
-<!-- System Status -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="fas fa-server me-2"></i>System Status</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h6 class="widget-title">Models Loaded</h6>
-                                <div class="widget-icon">
-                                    <i class="fas fa-brain"></i>
-                                </div>
-                            </div>
-                            <h3 class="text-center">{{ system_status.total_models }}</h3>
-                            <p class="text-center text-muted small">Machine Learning Models</p>
-                        </div>
-                    </div>
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="/" class="active">首页</a></li>
+                <li><a href="/data-analysis">数据处理分析</a></li>
+                <li><a href="/model-results">模型预测结果</a></li>
+                <li><a href="/model-comparison">模型对比分析</a></li>
+            </ul>
+        </div>
+    </nav>
 
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h6 class="widget-title">Preprocessor</h6>
-                                <div class="widget-icon">
-                                    <i class="fas fa-cogs"></i>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                {% if system_status.preprocessor_loaded %}
-                                    <span class="badge bg-success">Ready</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Not Ready</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-center text-muted small">Data Processing Pipeline</p>
-                        </div>
-                    </div>
+    <div class="container">
+        <section>
+            <h2>项目概述</h2>
+            <p>本平台展示了基于德国信用数据集的机器学习模型分析结果，包括数据处理分析、模型预测结果和模型对比分析。</p>
+            <p>通过左侧导航可以浏览不同部分的分析结果。点击图片可以查看大图。</p>
+        </section>
 
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h6 class="widget-title">Explainers</h6>
-                                <div class="widget-icon">
-                                    <i class="fas fa-search"></i>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                {% if system_status.explainer_loaded %}
-                                    <span class="badge bg-success">Ready</span>
-                                {% else %}
-                                    <span class="badge bg-warning">Limited</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-center text-muted small">Model Interpretation</p>
-                        </div>
-                    </div>
+        <section>
+            <h2>分析内容概览</h2>
+            <ul>
+                <li><strong>数据处理分析</strong>：展示数据预处理、特征工程和探索性数据分析的结果</li>
+                <li><strong>模型预测结果</strong>：展示各模型的预测性能指标和详细评估结果</li>
+                <li><strong>模型对比分析</strong>：多模型之间的性能对比，包括各种评估指标的可视化</li>
+            </ul>
+        </section>
 
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="widget">
-                            <div class="widget-header">
-                                <h6 class="widget-title">Evaluation Data</h6>
-                                <div class="widget-icon">
-                                    <i class="fas fa-chart-bar"></i>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                {% if system_status.evaluation_loaded %}
-                                    <span class="badge bg-success">Available</span>
-                                {% else %}
-                                    <span class="badge bg-warning">Loading</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-center text-muted small">Performance Metrics</p>
-                        </div>
-                    </div>
+        <section>
+            <h2>主要模型</h2>
+            <p>本次分析使用了以下模型进行对比：</p>
+            <ul>
+                <li>逻辑回归 (Logistic Regression)</li>
+                <li>决策树 (Decision Tree)</li>
+                <li>支持向量机 (SVM) - RBF核</li>
+                <li>朴素贝叶斯 (Naive Bayes)</li>
+                <li>自定义AdaBoost</li>
+                <li>Sklearn AdaBoost</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>示例图片预览</h2>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/roc_curves.png"
+                         alt="ROC曲线"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>ROC曲线对比</p>
+                </div>
+                <div class="image-container">
+                    <img src="/static/reports/figures/confusion_matrices.png"
+                         alt="混淆矩阵"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>混淆矩阵</p>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Available Models -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Available Models</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for model in models %}
-                    <div class="col-lg-4 col-md-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="card-title mb-0">{{ model.name }}</h6>
-                                    {% if model.loaded %}
-                                    <span class="badge bg-success"><i class="fas fa-check"></i> Loaded</span>
-                                    {% else %}
-                                    <span class="badge bg-danger"><i class="fas fa-times"></i> Not Loaded</span>
-                                    {% endif %}
-                                </div>
-                                <p class="card-text small text-muted">
-                                    {% if 'logistic' in model.type %}
-                                    Logistic Regression - Linear classifier with probability outputs
-                                    {% elif 'tree' in model.type %}
-                                    Decision Tree - Rule-based classifier with full interpretability
-                                    {% elif 'svm' in model.type %}
-                                    Support Vector Machine - Maximum margin classifier
-                                    {% elif 'bayes' in model.type %}
-                                    Naive Bayes - Probabilistic classifier based on Bayes theorem
-                                    {% elif 'adaboost' in model.type %}
-                                    AdaBoost Ensemble - Adaptive boosting with decision stumps
-                                    {% else %}
-                                    {{ model.type }}
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="row">
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-calculator fa-3x text-primary"></i>
-                </div>
-                <h5 class="card-title">Make Prediction</h5>
-                <p class="card-text">Use our trained models to predict credit risk for new applicants.</p>
-                <a href="{{ url_for('predict_form') }}" class="btn btn-primary">Try It Now</a>
-            </div>
-        </div>
+        </section>
     </div>
 
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-search fa-3x text-success"></i>
-                </div>
-                <h5 class="card-title">Understand Models</h5>
-                <p class="card-text">Explore how models make decisions with various explanation techniques.</p>
-                <a href="{{ url_for('explain_home') }}" class="btn btn-success">Explore Explanations</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-chart-bar fa-3x text-warning"></i>
-                </div>
-                <h5 class="card-title">Compare Performance</h5>
-                <p class="card-text">Compare different models using ROC curves and performance metrics.</p>
-                <a href="{{ url_for('compare') }}" class="btn btn-warning">View Comparisons</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Dataset Information -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Dataset Information</h5>
-            </div>
-            <div class="card-body">
-                <p>The system uses the <strong>German Credit Dataset</strong> with the following characteristics:</p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Total Samples
-                                <span class="badge bg-primary rounded-pill">1000</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Features
-                                <span class="badge bg-primary rounded-pill">20</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Numeric Features
-                                <span class="badge bg-primary rounded-pill">7</span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Categorical Features
-                                <span class="badge bg-primary rounded-pill">13</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Good Credit
-                                <span class="badge bg-success rounded-pill">700</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Bad Credit
-                                <span class="badge bg-danger rounded-pill">300</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

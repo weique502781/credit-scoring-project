@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型预测结果 - 模型分析结果展示</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>机器学习模型分析结果展示平台</h1>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="/">首页</a></li>
+                <li><a href="/data-analysis">数据处理分析</a></li>
+                <li><a href="/model-results" class="active">模型预测结果</a></li>
+                <li><a href="/model-comparison">模型对比分析</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section>
+            <h2>模型预测结果详情</h2>
+            <p>本部分展示各模型的详细预测结果，包括混淆矩阵和模型解释。</p>
+        </section>
+
+        <section>
+            <h2>混淆矩阵</h2>
+            <p>混淆矩阵展示了各模型的预测分类结果，包括真正例(TP)、假正例(FP)、真负例(TN)和假负例(FN)：</p>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/confusion_matrices.png"
+                         alt="各模型混淆矩阵"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>各模型混淆矩阵对比</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>模型解释 (LIME)</h2>
+            <p>使用LIME方法对模型预测进行解释，展示各特征对特定预测结果的影响：</p>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="/static/reports/figures/lime_explanation.png"
+                         alt="LIME模型解释"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>LIME特征重要性解释</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

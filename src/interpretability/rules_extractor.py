@@ -1,8 +1,11 @@
+# ./interpretability/rules_extractor.py
+
 import numpy as np
 import pandas as pd
 from sklearn.tree import _tree
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import os
 
 
 class DecisionRulesExtractor:
@@ -24,6 +27,14 @@ class DecisionRulesExtractor:
             self.class_names = ['Bad Credit', 'Good Credit']
         else:
             self.class_names = class_names
+
+        self.project_root = self._get_project_root()
+
+    def _get_project_root(self) -> str:
+        """获取项目根目录"""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        return project_root
 
     def extract_rules_from_tree(self, tree_model, max_depth: int = 5) -> pd.DataFrame:
         """
@@ -98,10 +109,11 @@ class DecisionRulesExtractor:
 
         # 转换为DataFrame并按置信度排序
         rules_df = pd.DataFrame(rules)
-        rules_df = rules_df.sort_values(['confidence', 'samples'], ascending=[False, False])
+        if not rules_df.empty:
+            rules_df = rules_df.sort_values(['confidence', 'samples'], ascending=[False, False])
 
-        # 添加规则ID
-        rules_df.insert(0, 'rule_id', range(1, len(rules_df) + 1))
+            # 添加规则ID
+            rules_df.insert(0, 'rule_id', range(1, len(rules_df) + 1))
 
         return rules_df
 
@@ -154,16 +166,20 @@ class DecisionRulesExtractor:
         Returns:
             简化后的规则DataFrame
         """
+        if rules_df.empty:
+            return rules_df
+
         # 过滤规则
         filtered_rules = rules_df[
             (rules_df['confidence'] >= min_confidence) &
             (rules_df['samples'] >= min_samples)
             ].copy()
 
-        # 简化规则表达式
-        filtered_rules['rule_simple'] = filtered_rules['rule'].apply(
-            self._simplify_rule_expression
-        )
+        if not filtered_rules.empty:
+            # 简化规则表达式
+            filtered_rules['rule_simple'] = filtered_rules['rule'].apply(
+                self._simplify_rule_expression
+            )
 
         return filtered_rules
 
@@ -211,7 +227,7 @@ class DecisionRulesExtractor:
         return simplified
 
     def generate_rule_report(self, rules_df: pd.DataFrame,
-                             output_path: str = 'reports/decision_rules_report.md') -> str:
+                             output_path: str = None) -> str:
         """
         生成规则报告
 
@@ -224,6 +240,12 @@ class DecisionRulesExtractor:
         """
         if rules_df.empty:
             return "No rules found."
+
+        # 确定保存路径
+        if output_path is None:
+            reports_dir = os.path.join(self.project_root, 'reports')
+            os.makedirs(reports_dir, exist_ok=True)
+            output_path = os.path.join(reports_dir, 'decision_rules_report.md')
 
         # 统计信息
         total_rules = len(rules_df)
@@ -251,7 +273,8 @@ class DecisionRulesExtractor:
             report += "\n| Rule ID | Rule | Confidence | Samples |\n"
             report += "|---------|------|------------|---------|\n"
             for _, row in good_credit_rules.iterrows():
-                report += f"| {row['rule_id']} | {row['rule_simple']} | {row['confidence']:.2%} | {row['samples']} |\n"
+                rule_simple = row.get('rule_simple', row['rule'])
+                report += f"| {row['rule_id']} | {rule_simple} | {row['confidence']:.2%} | {row['samples']} |\n"
 
         # 添加坏信用规则
         report += "\n## Top Rules for Bad Credit\n"
@@ -260,14 +283,16 @@ class DecisionRulesExtractor:
             report += "\n| Rule ID | Rule | Confidence | Samples |\n"
             report += "|---------|------|------------|---------|\n"
             for _, row in bad_credit_rules.iterrows():
-                report += f"| {row['rule_id']} | {row['rule_simple']} | {row['confidence']:.2%} | {row['samples']} |\n"
+                rule_simple = row.get('rule_simple', row['rule'])
+                report += f"| {row['rule_id']} | {rule_simple} | {row['confidence']:.2%} | {row['samples']} |\n"
 
         # 添加规则示例
         report += "\n## Rule Examples\n"
         report += "\n### High Confidence Rules (> 90%)\n"
         high_conf_rules = rules_df[rules_df['confidence'] > 0.9].head(5)
         for _, row in high_conf_rules.iterrows():
-            report += f"- **IF** {row['rule_simple']} **THEN** {row['class']} "
+            rule_simple = row.get('rule_simple', row['rule'])
+            report += f"- **IF** {rule_simple} **THEN** {row['class']} "
             report += f"(Confidence: {row['confidence']:.2%}, Samples: {row['samples']})\n"
 
         # 保存报告
@@ -278,7 +303,7 @@ class DecisionRulesExtractor:
         return report
 
     def export_rules_to_json(self, rules_df: pd.DataFrame,
-                             output_path: str = 'reports/decision_rules.json') -> None:
+                             output_path: str = None) -> None:
         """
         将规则导出为JSON格式
 
@@ -286,6 +311,16 @@ class DecisionRulesExtractor:
             rules_df: 规则DataFrame
             output_path: 输出文件路径
         """
+        if rules_df.empty:
+            print("No rules to export")
+            return
+
+        # 确定保存路径
+        if output_path is None:
+            reports_dir = os.path.join(self.project_root, 'reports')
+            os.makedirs(reports_dir, exist_ok=True)
+            output_path = os.path.join(reports_dir, 'decision_rules.json')
+
         # 转换为字典格式
         rules_dict = {
             'metadata': {
@@ -304,3 +339,79 @@ class DecisionRulesExtractor:
             json.dump(rules_dict, f, indent=2, ensure_ascii=False)
 
         print(f"Rules exported to JSON: {output_path}")
+
+    def analyze_decision_tree(self, tree_model,
+                              feature_importance: bool = True,
+                              rule_extraction: bool = True,
+                              max_depth: int = 5,
+                              save_dir: str = None) -> Dict:
+        """
+        全面分析决策树模型
+
+        Args:
+            tree_model: 决策树模型
+            feature_importance: 是否分析特征重要性
+            rule_extraction: 是否提取规则
+            max_depth: 规则提取最大深度
+            save_dir: 保存目录
+
+        Returns:
+            分析结果字典
+        """
+        if save_dir is None:
+            save_dir = os.path.join(self.project_root, 'reports', 'decision_tree_analysis')
+        os.makedirs(save_dir, exist_ok=True)
+
+        analysis = {
+            'model_type': type(tree_model).__name__,
+            'parameters': tree_model.get_params() if hasattr(tree_model, 'get_params') else {},
+            'feature_names': self.feature_names,
+            'class_names': self.class_names
+        }
+
+        # 特征重要性
+        if feature_importance and hasattr(tree_model, 'feature_importances_'):
+            importance_dict = dict(zip(self.feature_names, tree_model.feature_importances_))
+            analysis['feature_importance'] = importance_dict
+
+            # 排序并取前10
+            sorted_importance = sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)[:10]
+            analysis['top_features'] = sorted_importance
+
+        # 规则提取
+        if rule_extraction:
+            rules_df = self.extract_rules_from_tree(tree_model, max_depth)
+            if not rules_df.empty:
+                analysis['total_rules'] = len(rules_df)
+                analysis['rules'] = rules_df.to_dict('records')
+
+                # 生成报告
+                self.generate_rule_report(rules_df, os.path.join(save_dir, 'rules_report.md'))
+                self.export_rules_to_json(rules_df, os.path.join(save_dir, 'rules.json'))
+
+        # 保存分析结果
+        analysis_path = os.path.join(save_dir, 'tree_analysis.json')
+        with open(analysis_path, 'w', encoding='utf-8') as f:
+            json.dump(analysis, f, indent=2, ensure_ascii=False)
+
+        print(f"决策树分析保存到: {analysis_path}")
+        return analysis
+
+
+# 使用示例
+if __name__ == "__main__":
+    print("决策规则提取器")
+    print("=" * 50)
+
+    # 创建示例特征名称
+    feature_names = [f'feature_{i}' for i in range(10)]
+
+    # 初始化提取器
+    extractor = DecisionRulesExtractor(
+        feature_names=feature_names,
+        class_names=['Good Credit', 'Bad Credit']
+    )
+
+    print(f"规则提取器初始化完成")
+    print(f"特征数量: {len(feature_names)}")
+    print(f"类别: {extractor.class_names}")
