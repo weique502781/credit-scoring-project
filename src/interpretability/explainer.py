@@ -1,9 +1,13 @@
+# ./interpretability/explainer.py
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 import warnings
+import json
+import os
 
 warnings.filterwarnings('ignore')
 
@@ -52,10 +56,17 @@ class ModelExplainer:
         self.random_state = random_state
         self.lime_explainer = None
         self.shap_explainer = None
+        self.project_root = self._get_project_root()
 
         # 设置可视化风格
         plt.style.use('seaborn-v0_8-darkgrid')
         sns.set_palette("husl")
+
+    def _get_project_root(self) -> str:
+        """获取项目根目录"""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        return project_root
 
     def initialize_lime_explainer(self, X_train: np.ndarray,
                                   categorical_features: List[int] = None):
@@ -153,12 +164,17 @@ class ModelExplainer:
         plt.xlabel('Feature Importance', fontsize=12)
         plt.tight_layout()
 
+        # 创建报告目录
+        reports_dir = os.path.join(self.project_root, 'reports')
+        os.makedirs(reports_dir, exist_ok=True)
+
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"LIME可视化保存到: {save_path}")
         else:
-            plt.savefig('reports/lime_explanation.png', dpi=300, bbox_inches='tight')
-            print("LIME可视化保存到: reports/lime_explanation.png")
+            default_path = os.path.join(reports_dir, 'lime_explanation.png')
+            plt.savefig(default_path, dpi=300, bbox_inches='tight')
+            print(f"LIME可视化保存到: {default_path}")
 
         plt.show()
 
@@ -241,11 +257,15 @@ class ModelExplainer:
             save_path: 保存路径前缀
         """
         try:
+            # 创建报告目录
+            reports_dir = os.path.join(self.project_root, 'reports')
+            os.makedirs(reports_dir, exist_ok=True)
+
             # 确定保存路径
             if save_path:
                 base_path = save_path.replace('.png', '')
             else:
-                base_path = 'reports/shap'
+                base_path = os.path.join(reports_dir, 'shap')
 
             # 1. 汇总图
             plt.figure(figsize=(12, 8))
@@ -281,79 +301,12 @@ class ModelExplainer:
             plt.savefig(f'{base_path}_bar.png', dpi=300, bbox_inches='tight')
             plt.show()
 
-            # 3. 依赖图（前5个重要特征）
-            if hasattr(self.shap_explainer, 'expected_value'):
-                expected_value = self.shap_explainer.expected_value
-                if isinstance(expected_value, np.ndarray):
-                    expected_value = expected_value[1]  # 二分类取正类
-
-                # 计算特征重要性
-                feature_importance = np.abs(shap_values[1] if isinstance(shap_values, list) else shap_values).mean(0)
-                top_features = np.argsort(feature_importance)[-5:][::-1]
-
-                for i, feature_idx in enumerate(top_features):
-                    plt.figure(figsize=(10, 6))
-                    shap.dependence_plot(feature_idx,
-                                         shap_values[1] if isinstance(shap_values, list) else shap_values,
-                                         X,
-                                         feature_names=self.feature_names[:X.shape[1]],
-                                         show=False)
-                    plt.title(f'SHAP Dependence Plot: {self.feature_names[feature_idx]}', fontsize=14)
-                    plt.tight_layout()
-                    plt.savefig(f'{base_path}_dependence_{i + 1}.png', dpi=300, bbox_inches='tight')
-                    plt.show()
-
             print(f"SHAP可视化已保存到: {base_path}_*.png")
 
         except Exception as e:
             print(f"SHAP可视化创建失败: {e}")
 
-    def create_global_explanation(self, model, X_train: np.ndarray,
-                                  method: str = 'both',
-                                  save_path: str = None) -> Dict:
-        """
-        创建全局解释
-
-        Args:
-            model: 要解释的模型
-            X_train: 训练数据
-            method: 解释方法 ('lime', 'shap', 'both')
-            save_path: 保存路径前缀
-
-        Returns:
-            包含全局解释的字典
-        """
-        explanation = {}
-
-        # 特征重要性分析
-        explanation['feature_importance'] = self._analyze_feature_importance(model)
-
-        # 决策边界分析（仅对简单模型）
-        if X_train.shape[1] <= 10:  # 特征维度较低时
-            explanation['decision_boundary'] = self._analyze_decision_boundary(model, X_train)
-
-        # 部分依赖分析
-        explanation['partial_dependence'] = self._analyze_partial_dependence(model, X_train)
-
-        # 选择的方法
-        if method in ['lime', 'both'] and LIME_AVAILABLE:
-            # 使用LIME解释多个代表性样本
-            explanation['lime_global'] = self._create_lime_global_explanation(model, X_train)
-
-        if method in ['shap', 'both'] and SHAP_AVAILABLE:
-            # 使用SHAP解释
-            self.initialize_shap_explainer(model, X_train)
-            shap_values, _ = self.explain_with_shap(model, X_train[:100],
-                                                    save_path=save_path)
-            explanation['shap_values'] = shap_values
-
-        # 保存全局解释
-        if save_path:
-            self._save_global_explanation(explanation, save_path)
-
-        return explanation
-
-    def _analyze_feature_importance(self, model) -> Dict:
+    def analyze_feature_importance(self, model) -> Dict:
         """
         分析特征重要性
 
@@ -416,117 +369,96 @@ class ModelExplainer:
         plt.xlabel('Importance Score')
         plt.title('Top 15 Feature Importance', fontsize=14)
         plt.tight_layout()
-        plt.savefig('reports/feature_importance.png', dpi=300, bbox_inches='tight')
+
+        # 保存到报告目录
+        reports_dir = os.path.join(self.project_root, 'reports')
+        os.makedirs(reports_dir, exist_ok=True)
+        save_path = os.path.join(reports_dir, 'feature_importance.png')
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"特征重要性图保存到: {save_path}")
         plt.show()
 
-    def _analyze_decision_boundary(self, model, X_train: np.ndarray) -> Dict:
+    def create_explanation_report(self, model, X: np.ndarray,
+                                  sample_indices: List[int] = None,
+                                  save_dir: str = None) -> Dict:
         """
-        分析决策边界（仅适用于2-3个特征）
+        创建完整的解释报告
 
         Args:
-            model: 模型
-            X_train: 训练数据
+            model: 要解释的模型
+            X: 特征数据
+            sample_indices: 要解释的样本索引列表
+            save_dir: 报告保存目录
 
         Returns:
-            决策边界分析结果
+            解释报告字典
         """
-        # 这里只是示例，实际实现需要根据特征维度调整
-        return {
-            'note': 'Decision boundary analysis requires feature selection and visualization',
-            'available': X_train.shape[1] <= 3
+        if save_dir is None:
+            save_dir = os.path.join(self.project_root, 'reports', 'explanations')
+        os.makedirs(save_dir, exist_ok=True)
+
+        report = {
+            'model_type': type(model).__name__,
+            'feature_names': self.feature_names,
+            'class_names': self.class_names,
+            'explanations': []
         }
 
-    def _analyze_partial_dependence(self, model, X_train: np.ndarray) -> Dict:
-        """
-        分析部分依赖
+        # 全局解释
+        report['global_explanation'] = self.analyze_feature_importance(model)
 
-        Args:
-            model: 模型
-            X_train: 训练数据
+        # 样本解释
+        if sample_indices is None:
+            # 默认选择5个代表性样本
+            sample_indices = list(range(min(5, len(X))))
 
-        Returns:
-            部分依赖分析结果
-        """
-        # 这里只是示例框架
-        return {
-            'note': 'Partial dependence analysis implementation would go here',
-            'features_analyzed': self.feature_names[:min(5, X_train.shape[1])]
-        }
+        for idx in sample_indices:
+            if idx < len(X):
+                sample = X[idx]
 
-    def _create_lime_global_explanation(self, model, X_train: np.ndarray,
-                                        num_samples: int = 10) -> List:
-        """
-        创建LIME全局解释（多个代表性样本）
-
-        Args:
-            model: 模型
-            X_train: 训练数据
-            num_samples: 样本数量
-
-        Returns:
-            LIME解释列表
-        """
-        explanations = []
-
-        if self.lime_explainer is None:
-            self.initialize_lime_explainer(X_train)
-
-        if self.lime_explainer:
-            # 选择代表性样本（如聚类中心）
-            from sklearn.cluster import KMeans
-            kmeans = KMeans(n_clusters=num_samples, random_state=self.random_state)
-            cluster_labels = kmeans.fit_predict(X_train)
-
-            for cluster_id in range(num_samples):
-                # 找到每个聚类的中心样本
-                cluster_samples = X_train[cluster_labels == cluster_id]
-                if len(cluster_samples) > 0:
-                    center_idx = np.argmin(
-                        np.linalg.norm(cluster_samples - kmeans.cluster_centers_[cluster_id], axis=1)
+                # LIME解释
+                lime_result = None
+                if LIME_AVAILABLE and self.lime_explainer:
+                    lime_result = self.explain_with_lime(
+                        model, sample,
+                        num_features=8,
+                        show_plot=False,
+                        save_path=os.path.join(save_dir, f'sample_{idx}_lime.png')
                     )
-                    sample = cluster_samples[center_idx]
 
-                    # 解释该样本
-                    explanation = self.explain_with_lime(
-                        model, sample, num_features=8, show_plot=False
-                    )
-                    if explanation:
-                        explanation['cluster_id'] = cluster_id
-                        explanation['sample_type'] = 'cluster_center'
-                        explanations.append(explanation)
-
-        return explanations
-
-    def _save_global_explanation(self, explanation: Dict, save_path: str):
-        """
-        保存全局解释
-
-        Args:
-            explanation: 解释字典
-            save_path: 保存路径
-        """
-        import json
-
-        # 准备可序列化的解释
-        serializable_explanation = {}
-
-        for key, value in explanation.items():
-            if key in ['shap_values', 'lime_global']:
-                # 跳过复杂对象
-                serializable_explanation[key] = f"{type(value).__name__} (not serialized)"
-            elif isinstance(value, np.ndarray):
-                serializable_explanation[key] = value.tolist()
-            elif isinstance(value, dict):
-                serializable_explanation[key] = {
-                    k: (v.tolist() if isinstance(v, np.ndarray) else v)
-                    for k, v in value.items()
+                sample_explanation = {
+                    'sample_index': idx,
+                    'prediction': int(model.predict(sample.reshape(1, -1))[0]),
+                    'prediction_prob': model.predict_proba(sample.reshape(1, -1))[0].tolist(),
+                    'lime_explanation': lime_result
                 }
-            else:
-                serializable_explanation[key] = value
+                report['explanations'].append(sample_explanation)
 
-        # 保存为JSON
-        json_path = f"{save_path}_global_explanation.json"
-        with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(serializable_explanation, f, indent=2, ensure_ascii=False)
+        # 保存报告
+        report_path = os.path.join(save_dir, 'explanation_report.json')
+        with open(report_path, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
 
-        print(f"全局解释保存到: {json_path}")
+        print(f"解释报告保存到: {report_path}")
+        return report
+
+
+# 使用示例
+if __name__ == "__main__":
+    # 示例用法
+    print("模型可解释性分析器")
+    print("=" * 50)
+
+    # 创建示例特征名称
+    feature_names = [f'feature_{i}' for i in range(10)]
+
+    # 初始化解释器
+    explainer = ModelExplainer(
+        feature_names=feature_names,
+        class_names=['Good Credit', 'Bad Credit']
+    )
+
+    print(f"解释器初始化完成")
+    print(f"特征数量: {len(feature_names)}")
+    print(f"LIME可用: {LIME_AVAILABLE}")
+    print(f"SHAP可用: {SHAP_AVAILABLE}")
