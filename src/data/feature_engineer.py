@@ -104,6 +104,21 @@ class FeatureEngineer:
         X_selected = self.feature_selector.transform(X)
         return pd.DataFrame(X_selected, columns=self.selected_features)
 
+    # def transform_base(self, df):
+    #     """
+    #     仅执行基础特征工程（不进行特征选择）
+    #     用于训练流程的前半部分
+    #     """
+    #     df = df.copy()
+    #
+    #     # 清洗特征
+    #     df = self.clean_feature(df)
+    #
+    #     # 添加自定义特征
+    #     df = self.add_custom_features(df)
+    #
+    #     return df
+
 
 # 测试代码
 if __name__ == "__main__":
