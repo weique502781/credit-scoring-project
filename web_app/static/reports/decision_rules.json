@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "title": "德国信用评分决策规则",
+    "generated_date": "2024年",
+    "model_type": "决策树",
+    "total_rules": 18,
+    "average_confidence": 0.864,
+    "coverage": 0.723
+  },
+  "rules": [
+    {
+      "id": 1,
+      "type": "good_credit",
+      "conditions": [
+        "status_checking_account = A11",
+        "duration ≤ 18"
+      ],
+      "confidence": 0.942,
+      "support": 85,
+      "business_interpretation": "有支票余额且短期贷款的客户"
+    },
+    {
+      "id": 2,
+      "type": "good_credit",
+      "conditions": [
+        "savings_account = A65",
+        "credit_amount ≤ 5000"
+      ],
+      "confidence": 0.918,
+      "support": 67,
+      "business_interpretation": "高储蓄且小额贷款的客户"
+    },
+    {
+      "id": 3,
+      "type": "bad_credit",
+      "conditions": [
+        "status_checking_account = A14",
+        "duration > 48"
+      ],
+      "confidence": 0.907,
+      "support": 42,
+      "business_interpretation": "无支票账户且长期贷款"
+    }
+  ]
+}
