@@ -1,0 +1,21 @@
+{
+  "metadata": {
+    "title": "德国信用评分决策规则",
+    "generated_date": "2024年",
+    "model_type": "决策树",
+    "total_rules": 18,
+    "average_confidence": 0.864,
+    "coverage": 0.723
+  },
+  "rules_summary": {
+    "good_credit_rules": 11,
+    "bad_credit_rules": 7,
+    "top_features": [
+      "支票账户状态",
+      "贷款期限",
+      "储蓄账户",
+      "信用历史",
+      "年龄"
+    ]
+  }
+}
