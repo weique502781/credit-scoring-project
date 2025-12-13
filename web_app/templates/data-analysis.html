@@ -223,6 +223,92 @@
             text-decoration: none;
             color: white;
         }
+
+        /* 新增的样式 */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .image-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .image-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .image-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 1.2em;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            padding: 5px;
+        }
+
+        .image-container p {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .download-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .download-section .download-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #28a745;
+            padding: 12px 20px;
+            font-size: 16px;
+        }
+
+        .download-section .download-link:hover {
+            background-color: #218838;
+        }
+
+        .download-section .download-link:nth-child(2) {
+            background-color: #007bff;
+        }
+
+        .download-section .download-link:nth-child(2):hover {
+            background-color: #0056b3;
+        }
+
+        .download-section .download-link:nth-child(3) {
+            background-color: #6f42c1;
+        }
+
+        .download-section .download-link:nth-child(3):hover {
+            background-color: #563d7c;
+        }
     </style>
 </head>
 <body>
@@ -258,6 +344,146 @@
                          alt="决策树特征重要性"
                          onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
                     <p>决策树特征重要性</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>数据探索性分析</h2>
+            <p>以下是对德国信用数据集的探索性分析结果：</p>
+
+            <div class="image-grid">
+                <!-- 违约状态分布 -->
+                <div class="image-container">
+                    <h3>违约状态分布</h3>
+                    <img src="/static/reports/default_distribution.png"
+                         alt="违约状态分布"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>正常用户: 560个 (70%)，违约用户: 240个 (30%)</p>
+                </div>
+
+                <!-- 数值特征分布 -->
+                <div class="image-container">
+                    <h3>数值特征分布</h3>
+                    <img src="/static/reports/numeric_features_distribution.png"
+                         alt="数值特征分布"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>7个数值特征的分布（按违约状态区分）</p>
+                </div>
+
+                <!-- 特征相关性热力图 -->
+                <div class="image-container">
+                    <h3>特征相关性热力图</h3>
+                    <img src="/static/reports/feature_correlation.png"
+                         alt="特征相关性热力图"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>数值特征间的Pearson相关系数</p>
+                </div>
+
+                <!-- 特征与目标相关性 -->
+                <div class="image-container">
+                    <h3>特征与违约状态相关性</h3>
+                    <img src="/static/reports/feature_target_correlation.png"
+                         alt="特征与违约状态相关性"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>数值特征与违约状态的相关性分析</p>
+                </div>
+
+                <!-- 分类特征违约率分布 -->
+                <div class="image-container">
+                    <h3>分类特征违约率分布</h3>
+                    <img src="/static/reports/categorical_features_default_rate.png"
+                         alt="分类特征违约率分布"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>4个核心分类特征的违约率对比</p>
+                </div>
+
+                <!-- 账户状态vs贷款金额 -->
+                <div class="image-container">
+                    <h3>账户状态 vs 贷款金额</h3>
+                    <img src="/static/reports/account_status_credit_amount.png"
+                         alt="账户状态 vs 贷款金额"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>带散点的箱线图（按违约状态分组）</p>
+                </div>
+
+                <!-- 贷款金额vs贷款期限 -->
+                <div class="image-container">
+                    <h3>贷款金额 vs 贷款期限</h3>
+                    <img src="/static/reports/credit_amount_duration_interaction.png"
+                         alt="贷款金额 vs 贷款期限"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>散点图（按违约状态着色）</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>模型评估结果</h2>
+            <p>以下是模型训练后的评估结果：</p>
+
+            <div class="image-grid">
+                <!-- 模型对比图 -->
+                <div class="image-container">
+                    <h3>多模型性能对比</h3>
+                    <img src="/static/reports/model_comparison.png"
+                         alt="多模型性能对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>多个模型在准确率、精确率等指标上的表现</p>
+                </div>
+
+                <!-- 混淆矩阵 -->
+                <div class="image-container">
+                    <h3>混淆矩阵对比</h3>
+                    <img src="/static/reports/confusion_matrices.png"
+                         alt="混淆矩阵对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>各模型的原始混淆矩阵</p>
+                </div>
+
+                <!-- 归一化混淆矩阵 -->
+                <div class="image-container">
+                    <h3>归一化混淆矩阵</h3>
+                    <img src="/static/reports/confusion_matrices_normalized.png"
+                         alt="归一化混淆矩阵"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>按行归一化的混淆矩阵</p>
+                </div>
+
+                <!-- ROC曲线 -->
+                <div class="image-container">
+                    <h3>ROC曲线对比</h3>
+                    <img src="/static/reports/roc_curves.png"
+                         alt="ROC曲线对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>各模型的ROC曲线及AUC值</p>
+                </div>
+
+                <!-- PR曲线 -->
+                <div class="image-container">
+                    <h3>PR曲线对比</h3>
+                    <img src="/static/reports/pr_curves.png"
+                         alt="PR曲线对比"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>精确率-召回率曲线及PR-AUC值</p>
+                </div>
+
+                <!-- AdaBoost特征重要性 -->
+                <div class="image-container">
+                    <h3>AdaBoost特征重要性</h3>
+                    <img src="/static/reports/feature_importance_adaboost.png"
+                         alt="AdaBoost特征重要性"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>前10个重要特征及分值</p>
+                </div>
+
+                <!-- 阈值敏感性分析 -->
+                <div class="image-container">
+                    <h3>AdaBoost阈值敏感性分析</h3>
+                    <img src="/static/reports/threshold_analysis_adaboost.png"
+                         alt="阈值敏感性分析"
+                         onerror="this.src='/static/images/placeholder.png'; this.alt='图片加载失败'">
+                    <p>不同阈值下的精确率、召回率和F1分数</p>
                 </div>
             </div>
         </section>
@@ -414,6 +640,22 @@ IF 年龄 > 30 AND 贷款金额 < 5000 THEN 信用良好
                         <li><strong>寻找模式</strong>: 识别重复出现的特征组合</li>
                     </ol>
                 </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>数据下载</h2>
+            <p>下载完整的分析报告和评估结果：</p>
+            <div class="download-section">
+                <a href="/static/reports/model_comparison.csv" class="download-link" download>
+                    📊 下载模型评估汇总表 (CSV)
+                </a>
+                <a href="/static/reports/decision_rules_report.md" class="download-link" download>
+                    📋 下载决策规则报告 (Markdown)
+                </a>
+                <a href="/static/reports/decision_rules.json" class="download-link" download>
+                    ⚙️ 下载决策规则数据 (JSON)
+                </a>
             </div>
         </section>
     </div>

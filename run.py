@@ -70,18 +70,83 @@ def start_web_app():
         os.chdir(original_dir)
 
 
+def check_report_files():
+    """检查报告文件状态"""
+    print("\n" + "=" * 60)
+    print("检查报告文件状态")
+    print("=" * 60)
+
+    reports_dir = 'reports'
+    required_files = [
+        'default_distribution.png',
+        'numeric_features_distribution.png',
+        'feature_correlation.png',
+        'feature_target_correlation.png',
+        'categorical_features_default_rate.png',
+        'account_status_credit_amount.png',
+        'credit_amount_duration_interaction.png',
+        'model_comparison.png',
+        'confusion_matrices.png',
+        'confusion_matrices_normalized.png',
+        'roc_curves.png',
+        'pr_curves.png',
+        'feature_importance_adaboost.png',
+        'threshold_analysis_adaboost.png',
+        'model_comparison.csv'
+    ]
+
+    if not os.path.exists(reports_dir):
+        print(f"✗ 报告目录不存在: {reports_dir}")
+        print("  请先运行数据分析（选项1）")
+        return
+
+    existing_files = os.listdir(reports_dir)
+
+    print("检查必需的分析图片文件:")
+    print("-" * 40)
+
+    missing_count = 0
+    for file in required_files:
+        if file in existing_files:
+            print(f"  ✓ {file}")
+        else:
+            print(f"  ✗ {file} (缺失)")
+            missing_count += 1
+
+    print(f"\n总计: {len(required_files)} 个必需文件")
+    print(f"存在: {len(required_files) - missing_count} 个")
+    print(f"缺失: {missing_count} 个")
+
+    if missing_count > 0:
+        print("\n建议运行数据分析（选项1）生成缺失文件")
+
+
 def main():
     """主菜单"""
+    # 检查报告目录是否存在
+    reports_dir = 'reports'
+    if not os.path.exists(reports_dir):
+        print(f"⚠ 警告: 报告目录 '{reports_dir}' 不存在")
+        print("  建议先运行选项1进行数据分析和模型训练")
+        print("  按Enter键继续...")
+        input()
+
     while True:
         print("\n" + "=" * 60)
         print("德国信用评分项目管理系统")
         print("=" * 60)
-        print("1. 只运行数据分析和模型训练")
-        print("2. 只启动Web应用")
+        print("1. 运行数据分析和模型训练（生成报告）")
+        print("2. 启动Web应用（查看分析结果）")
         print("3. 先运行分析，再启动Web应用")
-        print("4. 生成决策规则报告（单独）")
+        print("4. 检查报告文件状态")
         print("5. 退出")
         print("=" * 60)
+
+        # 显示当前报告状态
+        if os.path.exists(reports_dir):
+            report_files = os.listdir(reports_dir)
+            image_count = sum(1 for f in report_files if f.endswith('.png'))
+            print(f"当前报告目录: {len(report_files)} 个文件 ({image_count} 张图片)")
 
         choice = input("请选择 (1-5): ").strip()
 
@@ -94,8 +159,7 @@ def main():
                 input("\n数据分析完成，按Enter键启动Web应用...")
                 start_web_app()
         elif choice == '4':
-            # 单独生成决策规则
-            generate_decision_rules_alone()
+            check_report_files()
         elif choice == '5':
             print("退出程序")
             break
