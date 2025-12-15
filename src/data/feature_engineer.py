@@ -110,7 +110,7 @@ class FeatureEngineer:
     #     仅执行基础特征工程（不进行特征选择）
     #     用于训练流程的前半部分
     #     """
-    #     df = df.copy()
+    #     df = df.copy()+
     #
     #     # 清洗特征
     #     df = self.clean_feature(df)
