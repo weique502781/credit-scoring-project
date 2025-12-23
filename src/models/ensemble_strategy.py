@@ -12,9 +12,7 @@ def compute_model_weights(
     alpha: float = 0.7
 ) -> Dict[str, float]:
     """
-    基于验证集性能自动计算集成权重（唯一方案）
-
-    权重 = alpha * AUC + (1 - alpha) * F1
+    基于验证集性能自动计算集成权重， 权重 = alpha * AUC + (1 - alpha) * F1
     """
 
     raw_scores = {}
@@ -53,9 +51,9 @@ class EnsembleVoting:
     """
     多种集成策略：
     1. 硬投票
-    2. 软投票（平均概率）
+    2. 软投票
     3. 加权投票
-    4. Stacking（可选）
+    4. Stacking
     """
 
     def __init__(self):

@@ -18,12 +18,10 @@ from .adaboost_custom import ImprovedAdaBoost
 class EnsembleTrainer:
     """
     负责同时训练多种模型，便于比较性能、统一管理。
-    只使用优化后的配置（根据测试结果最佳）。
     """
 
     def __init__(self, random_state: int = 42):
         """
-        Args:
             random_state: 随机种子
         """
         # 使用优化配置（根据测试结果最佳）
@@ -70,7 +68,7 @@ class EnsembleTrainer:
         return probas
 
     def get_models(self) -> Dict[str, object]:
-        """返回训练好的模型字典，方便保存到磁盘"""
+        """返回训练好的模型字典"""
         return self.models
 
     def quick_evaluate(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict[str, float]:
